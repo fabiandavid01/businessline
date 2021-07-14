@@ -1,0 +1,15 @@
+server:
+  port: 4200
+spring:
+  application:
+    name: "Apis Microservice"
+  devtools:
+    add-properties: false
+  h2:
+    console:
+      enabled: true
+      path: /h2
+  profiles:
+    include:
+      - jpaAdapter
+      - ADPAuthorization

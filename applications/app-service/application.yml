@@ -1,0 +1,8 @@
+data.endpoints:
+ apiConnectURL: https://admin-apic-dev.apps.ambientesbc.lab/api/catalogs
+ apiPath: apis
+ authorizationURL: http://localhost:8080/getAuthorization
+ errorMesage: MSP - Error al intentar obtener las credenciales desde el secret manager de AWS
+ msaErroCode: MSA-0
+ accept: application/json
+ contentType: application/json

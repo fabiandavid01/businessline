@@ -1,0 +1,103 @@
+# Gradle
+# Build your Java project and run tests with Gradle using a Gradle wrapper script.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
+name: $(Build.SourceBranchName).$(date:yyyyMMdd)$(rev:.r)
+
+variables:
+  - group: 'devsecops_BREFA'
+  - name: 'artifactory.Repository'
+    value: 'build-IngSW_CleanArchitecture'
+  - name: 'proyecto'
+    value: 'ingswcleanarchitecture'
+
+resources:
+- repo: self
+
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - '*'
+
+jobs:
+    - job: BuildJob
+      displayName: 'Compilacion BackEnd'
+      pool:
+        name: Build
+        demands:
+            - Agent.OS -equals linux
+            - java
+            
+      steps: 
+        - task: SonarQubePrepare@4
+          displayName: 'Preparar Analisis -> Prepare analysis on SonarQube'
+          inputs:
+            SonarQube: SonarQube
+            scannerMode: Other
+            configMode: manual
+            cliProjectKey: '$(Build.Repository.Name)'
+            cliProjectName: '$(Build.Repository.Name)'
+            cliProjectVersion: '$(Build.BuildNumber)'
+            extraProperties: |
+              sonar.projectVersion=$(Build.BuildNumber)
+              sonar.projectKey=$(Build.Repository.Name)
+              sonar.branch.name=master
+              sonar.branch.name=$(Build.SourceBranchName)
+              
+              sonar.java.binaries=$(Build.SourcesDirectory)/aplications/app-service/build/classes,
+                $(Build.SourcesDirectory)/domain/model/build/classes,
+                $(Build.SourcesDirectory)/domain/usecase/build/classes,
+                $(Build.SourcesDirectory)/infraestructure/driven-adapters/techinical-logs-utility/build/classes,
+                $(Build.SourcesDirectory)/infraestructure/entry-points/api-rest/build/classes
+              
+              sonar.cobertura.reportPath=$(Build.SourcesDirectory)/build/reports/cobertura/coverage.xml
+
+              sonar.coverage.exclusions=**/*Test.java,**/*.js,**/*.html,**/*.xml,**/*.css,**/app.demo/MainAplication.java,**/config/usecase/UseCaseConfig.java
+              sonar.exclusions=**/aplications/app-service/src/**
+
+              sonar.junit.reportsPaths=$(Build.SourcesDirectory)/domain/model/build/test-results/test,
+                $(Build.SourcesDirectory)/domain/usecase/build/test-results/test,
+                $(Build.SourcesDirectory)/infraestructure/driven-adapters/build/test-results/test,
+                $(Build.SourcesDirectory)/infraestructure/entry-points/build/test-results/test
+
+            
+        - task: Gradle@1
+          displayName: 'Gradle -> Build / Ejecutar Pruebas Unitarias'
+          inputs:
+            gradleWrapperFile: gradlew
+            tasks: 'clean build --stacktrace'
+            publishJUnitResults: true
+            workingDirectory: .
+            testResultsFiles: '**/build/test-results/test/TEST-*.xml'
+            sonarQubeRunAnalysis: true
+            sonarQubeServiceEndpoint: SonarqubeGradle
+            sonarQubeProjectName: '$(Build.Repository.Name)'
+            sonarQubeProjectKey: '$(Build.Repository.Name)'
+            sonarQubeProjectVersion: '$(Build.BuildNumber)'
+            sonarQubeGradlePluginVersion: 2.7
+            sonarQubeFailWhenQualityGateFails: false
+
+        - task: PublishCodeCoverageResults@1
+          displayName: 'Publica -> Publicar cobertura'
+          inputs:
+            summaryFileLocation: '$(System.DefaultWorkingDirectory)/build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml'    
+
+
+        - task: SonarSource.sonarqube.6D01813A-9589-4B15-8491-8164AEB38055.SonarQubeAnalyze@4
+          displayName: 'Analisis -> Run Code Analysis'
+
+        - task: SonarQubePublish@4
+          displayName: 'SonarQube -> Resultado Quality Gate'
+          inputs:
+            pollingTimeoutSec: 600
+
+        - task: sonar-buildbreaker@8
+          displayName: ' SonarQube -> Validar Quality Gate'
+          inputs:
+            SonarQube: SonarQube
+          enabled: true
+           

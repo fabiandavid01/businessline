@@ -1,0 +1,17 @@
+dependencies {
+    implementation project(':usecase')
+    implementation project(':model')
+    compile('org.springframework.boot:spring-boot-starter-web')
+    //implementation 'org.springframework.boot:spring-boot-starter-security'
+
+}
+
+ext {
+    set('azureVersion', "2.1.7")
+}
+//
+//dependencyManagement {
+//    imports {
+//        mavenBom "com.microsoft.azure:azure-spring-boot-bom:${azureVersion}"
+//    }
+//}

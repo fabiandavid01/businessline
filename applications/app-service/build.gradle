@@ -1,0 +1,26 @@
+description = "Capa de configuración e inicio"
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    compile 'org.springframework.boot:spring-boot-starter'
+    
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-web-services'
+
+    implementation project(':model')
+    implementation project(':usecase')
+    implementation project(':api-rest')
+    implementation project(":techinical-logs-utility")
+
+    compile 'org.springframework.boot:spring-boot-starter'
+    compile 'org.apache.commons:commons-dbcp2:2.2.0'
+    runtime('org.springframework.boot:spring-boot-devtools')
+    compile 'org.reactivecommons.utils:object-mapper:0.1.0'
+}
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '5.6.1' // version required
+}
